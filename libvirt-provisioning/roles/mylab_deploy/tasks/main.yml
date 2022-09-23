@@ -22,7 +22,7 @@
     - name: "Clone the base image to a new VM"
       copy:
         dest: "{{ vm_path }}/{{ vm_name }}.qcow2"
-        src: "/run/media/alolivei/ALEXON/KVM_VMs/{{ imagename }}.qcow2"
+        src: "/var/lib/libvirt/images/{{ imagename }}.qcow2"
         force: no
       register: copy_results
 
