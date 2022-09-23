@@ -22,7 +22,7 @@
     - name: "Clone the base image to a new VM"
       copy:
         dest: "{{ vm_path }}/{{ vm_name }}.qcow2"
-        src: "/var/lib/libvirt/images/{{ imagename }}.qcow2"
+        src: "/run/media/alolivei/ALEXON/KVM_VMs/{{ imagename }}.qcow2"
         force: no
       register: copy_results
 
@@ -34,22 +34,22 @@
         --ssh-inject 'root:file:{{ ssh_key }}' \
         --selinux-relabel
       when: copy_results is changed
+    
+    - name: "(Optional) Resize the newly VM created disk"
+      command: qemu-img resize {{ vm_path }}/{{ vmname }}.qcow2 +{{ vm_disk_gb }}G
+      when: vm_disk_gb|length > 0
 
-    #- name: "(Optional) Resize the newly VM created disk"
-    #  command: qemu-img resize {{ vm_path }}/{{ vmname }}.qcow2 +{{ vm_disk_gb }}G
-    #  when: vm_disk_gb is defined
-
-    #- name: "Define a RHEL 8.6 VM"
-    #  community.libvirt.virt:
-    #    command: define
-    #    xml: "{{ lookup('template', 'rhel86-template.xml.j2') }}"
-    #  when: "{{ imagename }} == rhel86"
+    - name: "Define a RHEL 8.6 VM"
+      community.libvirt.virt:
+        command: define
+        xml: "{{ lookup('template', 'rhel86-template.xml.j2') }}"
+      when: imagename == "rhel86"
 
     - name: "Define a RHEL 9 VM"
       community.libvirt.virt:
         command: define
         xml: "{{ lookup('template', 'rhel9-template.xml.j2') }}"
-      #when: "{{ imagename }} == rhel9"
+      when: imagename == "rhel9"
 
     - name: "Change the VM title to the same as name"
       command: virsh desc --domain {{ vm_name }} --config --title {{ vm_name }}
