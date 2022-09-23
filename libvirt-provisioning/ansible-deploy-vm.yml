@@ -12,7 +12,7 @@
     - name: vmpath
       prompt: "Choose the KVM path to use"
       private: no
-      default: "/run/media/alolivei/ALEXON/KVM_VMs"
+      default: "/var/lib/libvirt/images/"
 
     - name: image_name
       prompt: "Choose the image to use"
