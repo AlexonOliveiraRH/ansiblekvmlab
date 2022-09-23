@@ -1,11 +1,11 @@
 ---
 # defaults file for mylab_deploy
 imagename: rhel9
-vm_path: /var/lib/libvirt/images/
-vm_name: test
-vm_desc: Test
+vm_path: /run/media/alolivei/ALEXON/KVM_VMs
+vm_name: teste
+vm_desc: Teste
 vm_vcpus: 1
 vm_ram_kb: 1048576
 vm_net: default
 vm_ip: 253
-ssh_key: /home/user/.ssh/id_rsa.pub
+ssh_key: /home/alolivei/.ssh/id_rsa.pub
