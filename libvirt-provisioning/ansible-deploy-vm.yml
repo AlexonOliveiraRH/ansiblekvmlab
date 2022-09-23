@@ -12,7 +12,7 @@
     - name: vmpath
       prompt: "Choose the KVM path to use"
       private: no
-      default: "/var/lib/libvirt/images/"
+      default: "/run/media/alolivei/ALEXON/KVM_VMs"
 
     - name: image_name
       prompt: "Choose the image to use"
@@ -49,9 +49,9 @@
       private: no
       default: "default"
 
-    #- name: vmdiskgb
-    #  prompt: "(Optional) Choose the value for the disk resizing in GiB (Default: 10)"
-    #  private: no
+    - name: vm_disk_gb
+      prompt: "(Optional) Choose the value for the disk resizing in GiB (Default: 10)"
+      private: no
 
   tasks:
   
@@ -67,4 +67,3 @@
        vm_ram_kb: "{{ vmramkb }}"
        vm_net: "{{ vmnet }}"
        vm_ip: "{{ vmip }}"
-       #vm_disk_gb: "{{ vmdiskgb }}"
