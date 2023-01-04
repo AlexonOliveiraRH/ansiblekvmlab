@@ -1,0 +1,92 @@
+---
+- hosts: dns
+  remote_user: root
+  vars:
+    directory: /var/named/
+    netsegment: 192.168.1.
+    domainfile: example.db
+    reversefile: 1.168.192.db
+    localdomain: .example.local.
+  tasks:
+  
+  - name: "Get Current Timestamp"
+    ansible.builtin.shell: echo "$(date +%Y%m%d)01"
+    register: timestamp
+    
+  - name: "Get Current Serial"
+    ansible.builtin.shell: grep Serial {{ directory }}{{ domainfile }} | cut -d";" -f1 | tr -d ' '
+    register: currentserial
+
+  - name: "Get Last Valid IP"
+    ansible.builtin.shell: grep VMware -B1 {{ directory }}{{ domainfile }} | grep -v VMware | cut -d'.' -f4
+    register: HOST_IP
+
+  - name: "Check if Record A Exists"
+    ansible.builtin.command: "grep -i -o {{ HOST_NAME }} {{ directory }}{{ domainfile }}"
+    register: checka
+    ignore_errors: yes
+
+  - name: "Check if PTR Exists"
+    ansible.builtin.command: "grep -i -o {{ HOST_NAME }} {{ directory }}{{ reversefile }}"
+    register: checkptr
+    ignore_errors: yes
+    
+  - name: "Adding A record"
+    ansible.builtin.lineinfile:
+      path: "{{ directory }}{{ domainfile }}"
+      line: "{{ HOST_NAME }}	     IN  A       {{ netsegment }}{{ HOST_IP.stdout | int +1 }}"
+      insertbefore: '; VMware Environment'
+    when: checka.stdout | length == 0
+    register: recordadd
+
+  - name: "Adding PTR record"
+    ansible.builtin.lineinfile:
+      path: "{{ directory }}{{ reversefile }}"
+      line: "{{ HOST_IP.stdout | int +1 }}              IN  PTR     {{ HOST_NAME }}{{ localdomain }}"
+    when: checkptr.stdout | length == 0
+    register: ptradd
+  
+  - name: "Changing time"
+    ansible.builtin.replace:
+      path: "{{ directory }}{{ item }}"
+      regexp: "{{ currentserial.stdout }}"
+      replace: "{{ timestamp.stdout }}"
+    loop:
+      - "{{ reversefile }}"
+      - "{{ domainfile }}"
+    when:
+      - recordadd.changed
+      - ptradd.changed
+    register: timeadd
+
+  - name: "Restarting named service"
+    ansible.builtin.service:
+      name: named
+      state: restarted
+    when:
+      - recordadd.changed
+      - ptradd.changed
+
+- hosts: localhost
+  become: yes
+  become_user: root
+  become_method: sudo
+  vars:
+    directory: /etc/
+    netsegment: 192.168.1.
+    hostsfile: hosts
+    localdomain: .example.local
+  tasks:
+  
+  - name: "Check if Host Exists"
+    ansible.builtin.command: "grep -i -o {{ HOST_NAME }} {{ directory }}{{ hostsfile }}"
+    register: checka
+    ignore_errors: yes
+
+  - name: "Adding Host"
+    ansible.builtin.lineinfile:
+      path: "{{ directory }}{{ hostsfile }}"
+      line: "{{ netsegment }}{{ hostvars.dns.HOST_IP.stdout | int +1 }}		{{ HOST_NAME }} {{ HOST_NAME }}{{ localdomain }}"
+      insertbefore: '## KVMs'
+    when: checka.stdout | length == 0
+...
